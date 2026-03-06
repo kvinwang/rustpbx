@@ -32,18 +32,24 @@ if [ ! -d bin ]; then
         *)           echo "ERROR: unsupported platform ${PLATFORM}" >&2; exit 1 ;;
     esac
 
-    # Use named volumes for cargo cache to speed up rebuilds
+    # Use named volumes for cargo cache and target dir to avoid
+    # host/container glibc mismatch and speed up rebuilds
     docker run --rm \
         -v "$(pwd)":/build \
         -w /build \
         -v rustpbx-cargo-registry:/usr/local/cargo/registry \
+        -v rustpbx-target:/build/target \
         -e SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH}" \
         "${RUST_BUILDER}" \
         bash -c "apt-get update -qq && apt-get install -y -qq cmake libopus-dev > /dev/null 2>&1 && cargo build --release"
 
+    # Copy binaries out of the named volume
     mkdir -p "bin/${ARCH_DIR}"
-    cp target/release/rustpbx "bin/${ARCH_DIR}/"
-    cp target/release/sipflow  "bin/${ARCH_DIR}/"
+    docker run --rm \
+        -v rustpbx-target:/target:ro \
+        -v "$(pwd)/bin/${ARCH_DIR}":/out \
+        "${RUST_BUILDER}" \
+        bash -c "cp /target/release/rustpbx /target/release/sipflow /out/"
     echo ""
 fi
 
