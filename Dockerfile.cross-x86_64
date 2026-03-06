@@ -1,4 +1,5 @@
-FROM ghcr.io/cross-rs/x86_64-unknown-linux-gnu:main
+# pinned 2026-03-06; update digest when upgrading cross image
+FROM ghcr.io/cross-rs/x86_64-unknown-linux-gnu@sha256:de830fec28ef24eca17d54941d0f386bc151e80e47f401d846c15165a5dd0310
 
 # Install clang, libclang (for bindgen), and dependencies  
 RUN apt-get update && apt-get install -y \
